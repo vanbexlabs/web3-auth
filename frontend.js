@@ -12,15 +12,17 @@ module.exports.signIn = function() {
   window.Eth = Eth;
   window.web3 = new Web3(web3.currentProvider);
   var eth = new Eth(web3.currentProvider)
+  
+  var baseUrl = location.protocol + "//" + location.hostname;
 
-  eth.personal_sign(web3.eth.accounts[0], ethUtil.bufferToHex(new Buffer("Sign into demo app.", 'utf8')))
+  eth.personal_sign(web3.eth.accounts[0], ethUtil.bufferToHex(new Buffer("Sign into " + baseUrl, 'utf8')))
   .then((signed) => {
     console.log('Signed!  Result is: ', signed);
 
     $.ajax({
       method: 'POST',
       contentType: 'application/json',
-      url: 'http://localhost:3000/sign-in',
+      url: baseUrl + ":" + location.port + '/sign-in',
       data: JSON.stringify({
         account: web3.eth.accounts[0],
         signed: signed,

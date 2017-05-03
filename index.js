@@ -35,8 +35,10 @@ module.exports.attach = function(app, secret) {
   app.post('/sign-in', function (req, res) {
     console.log(req.body);
     
+    var baseUrl = req.protocol + "://" + req.hostname;
+
     var msgParams = {
-      data: ethUtil.bufferToHex(new Buffer("Sign into demo app.", 'utf8')),
+      data: ethUtil.bufferToHex(new Buffer("Sign into " + baseUrl, 'utf8')),
       sig: req.body.signed,
     };
     var recovered = sigUtil.recoverPersonalSignature(msgParams)
@@ -50,7 +52,7 @@ module.exports.attach = function(app, secret) {
       res.cookie('token', token, {domain: 'localhost', httpOnly: true});
       res.end();
     } else {
-      console.log('SigUtil recover the message signer');
+      console.log('SigUtil unable to recover the message signer');
     }  
   });
 }
