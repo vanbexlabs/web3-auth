@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
@@ -14,8 +14,7 @@ module.exports.attach = function(app, secret) {
   app.use(function(req, res, next) {
     if (!req.xhr) {
       res.status(500).send('Not AJAX');
-    }
-    else {
+    } else {
       next();
     }
   });
@@ -23,36 +22,46 @@ module.exports.attach = function(app, secret) {
   app.use(bodyParser.json());
   app.use(cookieParser());
 
-  app.use(expressJwt({
-    secret: secret,
-    credentialsRequired: false,
-    getToken: function fromHeaderOrQuerystring (req) {
-      return req.cookies.token;
-    }
-  }).unless({path: ['/sign-in']})
+  app.use(
+    expressJwt({
+      secret: secret,
+      credentialsRequired: false,
+      getToken: function fromHeaderOrQuerystring(req) {
+        return req.cookies.token;
+      }
+    }).unless({ path: ['/sign-in'] })
   );
 
-  app.post('/sign-in', function (req, res) {
+  app.post('/sign-in', function(req, res) {
     console.log(req.body);
-    
-    var baseUrl = req.protocol + "://" + req.hostname;
 
-    var msgParams = {
-      data: ethUtil.bufferToHex(new Buffer("Sign into " + baseUrl, 'utf8')),
-      sig: req.body.signed,
-    };
-    var recovered = sigUtil.recoverPersonalSignature(msgParams)
+    var baseUrl = req.protocol + '://' + req.hostname;
+
+    var msgParams = [
+      {
+        type: 'string',
+        name: 'Message',
+        value: 'Sign into ' + baseUrl
+      }
+    ];
+
+    var recovered = sigUtil.recoverTypedSignature({
+      data: msgParams,
+      sig: req.body.signed
+    });
 
     if (recovered === req.body.account) {
-      console.log('SigUtil Successfully verified signer as ' + req.body.account);
-      
-      var token = jwt.sign({loggedInAs: req.body.account}, secret);
-      
+      console.log(
+        'SigUtil Successfully verified signer as ' + req.body.account
+      );
+
+      var token = jwt.sign({ loggedInAs: req.body.account }, secret);
+
       console.log('JWT token: ' + token);
-      res.cookie('token', token, {domain: 'localhost', httpOnly: true});
+      res.cookie('token', token, { domain: 'localhost', httpOnly: true });
       res.end();
     } else {
       console.log('SigUtil unable to recover the message signer');
-    }  
+    }
   });
-}
+};
