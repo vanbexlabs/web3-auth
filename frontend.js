@@ -2,7 +2,6 @@
 
 var Web3 = require('web3');
 var Eth = require('ethjs');
-var ethUtil = require('ethereumjs-util');
 var $ = require('jquery');
 
 module.exports = {};
@@ -14,11 +13,9 @@ module.exports.signIn = function () {
 
   let web3Provider = null
 
-
   // Modern dapp browsers...
   if (window.ethereum) {
     web3Provider = window.ethereum;
-
     try {
       // Request account access
       window.ethereum.enable().then(address => {
@@ -43,18 +40,17 @@ module.exports.signIn = function () {
     web3Provider = new Web3.providers.HttpProvider('http://localhost:8545');
     loadApp(web3Provider)
   }
-
-
 }
 
 
 function loadApp(web3Provider, address) {
+
   const legacyOptions = {
     defaultBlock: 'latest'
   }
 
   const newOptions = {
-    defaultAccount: address,
+    defaultAccount: address[0],
     defaultBlock: 'latest',
     defaultGas: 1,
     defaultGasPrice: 0,
@@ -63,36 +59,38 @@ function loadApp(web3Provider, address) {
     transactionPollingTimeout: 480,
   }
 
-  const _options = !address ? newOptions : legacyOptions
+  const _options = address ? newOptions : legacyOptions
 
   const web3 = new Web3(web3Provider, null, _options);
   window.web3 = web3
 
-  var eth = new Eth(web3.currentProvider)
-  console.log("TCL: loadApp -> eth", eth)
+  console.log("Using as default address: ", address)
+  const defaultAccount = address ? address[0] : web3Provider.eth.accounts[0];
 
-  var baseUrl = location.protocol + "//" + location.hostname;
-  console.log("TCL: loadApp -> baseUrl", baseUrl)
+  const baseUrl = location.protocol + "//" + location.hostname;
+  console.log("BaseUrl", baseUrl)
 
-  console.log("TCL: loadApp -> web3.eth.accounts[0]", web3.eth.accounts[0])
-  eth.personal_sign(web3.eth.accounts[0], ethUtil.bufferToHex(new Buffer("Sign into " + baseUrl, 'utf8')))
-    .then((signed) => {
-      console.log('Signed!  Result is: ', signed);
+  const msgToSign = web3.utils.utf8ToHex("Sign into " + baseUrl, 'utf8');
+  console.log("LoadApp -> msgToSign", msgToSign)
 
-      $.ajax({
-        method: 'POST',
-        contentType: 'application/json',
-        url: baseUrl + ":" + location.port + '/sign-in',
-        data: JSON.stringify({
-          account: web3.eth.accounts[0],
-          signed: signed,
-        }),
-        success: function (data, textStatus, jqXHR) {
-          console.log('Signed in.');
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-          console.log('Failed to sign in.');
-        }
-      });
-    })
+  web3.eth.personal.sign(msgToSign, defaultAccount, (error, signedMessage) => {
+    console.log("SignedMessage, ", error, signedMessage)
+    $.ajax({
+      method: 'POST',
+      contentType: 'application/json',
+      url: baseUrl + ":" + location.port + '/sign-in',
+      data: JSON.stringify({
+        account: defaultAccount,
+        signed: signedMessage,
+      }),
+      success: function (data, textStatus, jqXHR) {
+        console.log('Signed in.');
+      },
+      error: function (jqXHR, textStatus, errorThrown) {
+        console.log('Failed to sign in.');
+      }
+    });
+  });
+
+
 }
