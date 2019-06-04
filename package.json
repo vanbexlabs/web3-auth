@@ -1,5 +1,5 @@
 {
-  "name": "web3-auth-git",
+  "name": "web3-auth",
   "version": "1.2.0",
   "description": "Enables Ethereum accounts to be used to sign into Express applications.",
   "main": "index.js",
