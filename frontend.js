@@ -2,7 +2,6 @@
 
 var Web3 = require('web3');
 var Eth = require('ethjs');
-var ethUtil = require('ethereumjs-util');
 var $ = require('jquery');
 
 module.exports = {};
