@@ -12,11 +12,12 @@ module.exports = {};
 module.exports.attach = function (app, secret) {
   // Don't accept non-AJAX requests to prevent XSRF attacks.
   app.use(function (req, res, next) {
-    if (!req.xhr) {
-      res.status(500).send('Not AJAX');
-    } else {
-      next();
-    }
+    // if (!req.xhr) {
+    //   res.status(500).send('Not AJAX');
+    // } else {
+    //   next();
+    // }
+    next();
   });
 
   app.use(bodyParser.json());
